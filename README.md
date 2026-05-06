@@ -1,7 +1,7 @@
 # Projet TaskFlow - Système de Gestion des Tâches
 
 ## Groupe de travail
-* **Chef de projet**: Yasmine Elhamoudani
+* **Chef de projet**: Yasmine El hamoudani
 * **Membres**:["yasmine messaoudi","aya marzouq","ibtissam ghaoual","diallo mata"]
 
 ## Fonctionnalités
