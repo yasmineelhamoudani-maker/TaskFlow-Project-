@@ -1,4 +1,4 @@
-# Project TaskFlow - SMI S4
+# Projet TaskFlow - Système de Gestion des Tâches
 
 ## Groupe de travail
 * **Chef de projet**: Yasmine Elhamoudani
