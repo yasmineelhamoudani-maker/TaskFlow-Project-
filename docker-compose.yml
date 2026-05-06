@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo
+    container_name: mongodb_taskflow
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  app:
+    build: .
+    container_name: taskflow_backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://root:password@mongodb:27017/TaskFlowDB?authSource=admin
+      - JWT_SECRET=votre_secret_tres_long_et_securise
+    depends_on:
+      - mongodb
+
+volumes:
+  mongo-data:
