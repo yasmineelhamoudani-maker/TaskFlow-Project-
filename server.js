@@ -1,29 +1,25 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cors = require('cors'); 
 
-// Charger les variables d'environnement
 dotenv.config();
-
 const app = express();
 
-// Middleware pour lire le JSON 
+// Middlewares
+app.use(cors()); 
 app.use(express.json());
 
-// Connexion à la base de données MongoDB
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('Connexion à MongoDB réussie !'))
-    .catch((err) => console.error('Erreur de connexion MongoDB :', err));
-
-// Routes principales
+// Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/tasks', require('./routes/task')); 
 
-// Route de test pour vérifier que le serveur fonctionne
-app.get('/', (req, res) => {
-    res.send('Serveur TaskFlow opérationnel !');
-});
+app.get('/', (req, res) => res.send("Serveur TaskFlow Opérationnel"));
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Serveur en cours d'exécution sur le port ${PORT}`);
-});
+// Connexion MongoDB
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => {
+        console.log('✅ Connexion à MongoDB réussie !');
+        app.listen(5000, () => console.log("✅ Serveur sur port 5000"));
+    })
+    .catch(err => console.error('❌ Erreur MongoDB :', err));

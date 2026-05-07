@@ -3,9 +3,10 @@ const bcrypt = require('bcryptjs');
 
 // Définition du schéma utilisateur
 const userSchema = new mongoose.Schema({
-    nom: { 
-        type: String, 
-        required: [true, "Le nom est obligatoire"] 
+    fullName: {
+        type: String,
+        required: [true, "Le nom est obligatoire"],
+        trim: true
     },
     email: { 
         type: String, 
