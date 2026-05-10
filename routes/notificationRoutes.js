@@ -3,7 +3,7 @@ const router = express.Router();
 const Notification = require('../models/notification');
 const authMiddleware = require('../Middleware/auth');
 
-// GET toutes les notifications de l'utilisateur connecté
+// GET toutes les notifications de l'utilisateur connecte
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user.id })
