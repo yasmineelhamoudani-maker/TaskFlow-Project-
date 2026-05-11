@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
 const auth = require('../middleware/auth');
-
-// ✅ Fonctionnalité 4 : Assigner une tâche à un membre
 router.put('/:id/assign', auth, async (req, res) => {
   try {
     const task = await Task.findByIdAndUpdate(
@@ -16,8 +14,6 @@ router.put('/:id/assign', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ msg: 'Erreur serveur' });
   }
 });
-
-// ✅ Fonctionnalité 6 : Filtrage + Recherche + Pagination
 router.get('/', auth, async (req, res) => {
   try {
     const { status, priority, assignedTo, search, page = 1, limit = 5 } = req.query;
@@ -52,8 +48,6 @@ router.get('/', auth, async (req, res) => {
     res.status(500).json({ msg: 'Erreur serveur' });
   }
 });
-
-// ✅ Dashboard : tâches assignées à l'utilisateur connecté
 router.get('/my-tasks', auth, async (req, res) => {
   try {const tasks = await Task.find({ assignedTo: req.user.id })
       .populate('assignedTo', 'name email');
@@ -62,5 +56,3 @@ router.get('/my-tasks', auth, async (req, res) => {
     res.status(500).json({ msg: 'Erreur serveur' });
   }
 });
-
-module.exports = router;
