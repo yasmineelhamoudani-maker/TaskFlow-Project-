@@ -37,3 +37,100 @@ async function addTask() {
 }
 
 getTasks();
+
+
+//============ F7 — brouillons ============
+
+function saveDraft(projectId, formData) {
+  localStorage.setItem(`draft_${projectId}`, JSON.stringify(formData));
+}
+
+function loadDraft(projectId) {
+  const draft = localStorage.getItem(`draft_${projectId}`);
+  return draft ? JSON.parse(draft) : null;
+}
+
+function deleteDraft(projectId) {
+  localStorage.removeItem(`draft_${projectId}`);
+}
+
+function initTaskForm(projectId) {
+  const form = document.getElementById('task-form');
+  if (!form) return;
+
+  const draft = loadDraft(projectId);
+  if (draft) {
+    const restore = confirm("Un brouillon existe. Voulez-vous le restaurer ?");
+    if (restore) {
+      document.getElementById('task-title').value = draft.title || '';
+      document.getElementById('task-priority').value = draft.priority || 'moyenne';
+    } else {
+      deleteDraft(projectId);
+    }
+  }
+
+  form.addEventListener('input', () => {
+    const formData = {
+      title: document.getElementById('task-title').value,
+      priority: document.getElementById('task-priority').value,
+    };
+    saveDraft(projectId, formData);
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    deleteDraft(projectId);
+  });
+}
+
+// ============ F10 — notifications ============
+
+let notificationsCache = [];
+
+async function fetchNotifications() {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get('/api/notifications', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    notificationsCache = response.data;
+    updateBadge();
+    archiveReadNotifications();
+  } catch (error) {
+    console.error("Erreur notifications:", error);
+  }
+}
+
+function updateBadge() {
+  const unread = notificationsCache.filter(n => !n.isRead).length;
+  const badge = document.getElementById('notification-badge');
+  if (badge) {
+    badge.textContent = unread > 0 ? unread : '';
+    badge.style.display = unread > 0 ? 'inline' : 'none';
+  }
+}
+
+async function markAsRead(notificationId) {
+  try {
+    const token = localStorage.getItem('token');
+    await axios.patch(`/api/notifications/${notificationId}/read`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    notificationsCache = notificationsCache.map(n =>
+      n._id === notificationId ? { ...n, isRead: true } : n
+    );
+    updateBadge();
+    archiveReadNotifications();
+  } catch (error) {
+    console.error("Erreur:", error);
+  }
+}
+
+function archiveReadNotifications() {
+  const readNotifs = notificationsCache.filter(n => n.isRead);
+  localStorage.setItem('archivedNotifications', JSON.stringify(readNotifs));
+}
+
+// Polling toutes les 30 secondes
+setInterval(fetchNotifications, 30000);
+fetchNotifications();
