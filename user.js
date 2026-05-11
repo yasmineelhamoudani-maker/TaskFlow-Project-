@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
+// Définition du schéma utilisateur
 const userSchema = new mongoose.Schema({
-<<<<<<< HEAD
-    fullName: {
-        type: String,
-        required: [true, "Le nom est obligatoire"],
-        trim: true
+    nom: { 
+        type: String, 
+        required: [true, "Le nom est obligatoire"] 
     },
     email: { 
         type: String, 
@@ -33,11 +33,6 @@ userSchema.pre('save', async function(next) {
     } catch (err) {
         next(err);
     }
-=======
-    username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
->>>>>>> Assignetfiltrage
 });
 
 module.exports = mongoose.model('User', userSchema);
