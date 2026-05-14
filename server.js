@@ -7,10 +7,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// الربط مع المجلدات (Routes)
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/projet', require('./routes/projet'));
-app.use('/api/tasks', require('./routes/tasks')); // هادي ضرورية للـ Functionality 3
+app.use('/api/tasks', require('./routes/tasks')); 
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))
