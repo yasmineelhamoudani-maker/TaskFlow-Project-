@@ -1,17 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/user');
-const bcrypt = require('bcryptjs'); 
+const User = require('../models/user');  
+
 const jwt = require('jsonwebtoken');
 
 router.post('/register', async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
-        const newUser = new User({ fullName, email, password });
-        await newUser.save();
-        res.status(201).json({ message: "Utilisateur créé avec succès !" });
-    } catch (error) {
-        res.status(500).json({ message: "Erreur lors de l'inscription", error: error.message });
+       
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = new User({ fullName, email, password: hashedPassword });
+        await user.save();
+        res.status(201).json({ message: "Utilisateur créé avec succès" });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 

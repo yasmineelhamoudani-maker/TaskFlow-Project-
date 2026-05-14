@@ -1,30 +1,20 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const cors = require('cors'); 
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-
-dotenv.config();
+const cors = require('cors');
 const app = express();
 
-// Middlewares
-app.use(cors()); 
 app.use(express.json());
+app.use(cors());
 
-// Routes
+// الربط مع المجلدات (Routes)
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/tasks', require('./routes/task'));
-app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-app.use('/api/notifications', notificationRoutes); 
-app.get('/', (req, res) => res.send("Serveur TaskFlow Opérationnel"));
+app.use('/api/projet', require('./routes/projet'));
+app.use('/api/tasks', require('./routes/tasks')); // هادي ضرورية للـ Functionality 3
 
-// Connexion MongoDB
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('✅ Connexion à MongoDB réussie !');
-        app.listen(5000, () => console.log("✅ Serveur sur port 5000"));
-    })
-    .catch(err => console.error('❌ Erreur MongoDB :', err));
+  .then(() => console.log("Connected to MongoDB"))
+  .catch(err => console.error(err));
 
-
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
