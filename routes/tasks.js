@@ -56,3 +56,4 @@ router.get('/my-tasks', auth, async (req, res) => {
     res.status(500).json({ msg: 'Erreur serveur' });
   }
 });
+module.exports = router;
