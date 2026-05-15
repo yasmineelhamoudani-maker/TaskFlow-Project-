@@ -1,57 +1,46 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/user');  
-
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
 
-router.post('/register', async (req, res) => {
-    try {
-        const { fullName, email, password } = req.body;
-       
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ fullName, email, password: hashedPassword });
-        await user.save();
-        res.status(201).json({ message: "Utilisateur créé avec succès" });
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
+// @route   POST api/auth/login
+// @desc    Authentifier l'utilisateur et obtenir le token
 router.post('/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
+    const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+    try {
+       
+        let user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ message: "Utilisateur non trouvé !" });
+            return res.status(400).json({ msg: 'Utilisateur non trouvé' });
         }
 
+       
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: "Mot de passe incorrect !" });
+            return res.status(400).json({ msg: 'Mot de passe incorrect' });
         }
 
-        const token = jwt.sign(
-            { id: user._id }, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '1h' } 
+        const payload = {
+            userId: user.id
+        };
+
+        jwt.sign(
+            payload,
+            process.env.JWT_SECRET || 'SECRET_KEY_DIP_2026', 
+            { expiresIn: '24h' },
+            (err, token) => {
+                if (err) throw err;
+               
+                res.json({ token });
+            }
         );
 
-     
-        res.status(200).json({ 
-            message: "Connexion réussie !",
-            token: token, 
-            user: {
-                id: user._id,
-                fullName: user.fullName,
-                email: user.email
-            }
-        });
-          
-    } catch (error) {
-        res.status(500).json({ message: "Erreur serveur", error: error.message });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Erreur serveur');
     }
 });
-
 
 module.exports = router;
