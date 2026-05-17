@@ -1,35 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const Project = require('../models/projet');
+const Projet = require('../models/projet');
+const Task = require('../models/task'); 
 const auth = require('../middleware/auth');
 
 router.post('/', auth, async (req, res) => {
-  const project = await Project.create({ ...req.body, owner: req.user.id });
-  res.json(project);
+  try {
+    const { title, description } = req.body;
+    const newProjet = new Projet({ title, description, owner: req.user.id });
+    const savedProjet = await newProjet.save();
+    res.status(201).json(savedProjet);
+  } catch (err) {
+    res.status(500).json({ msg: "Erreur serveur", error: err.message });
+  }
 });
 
 router.get('/', auth, async (req, res) => {
-  const page = req.query.page || 1;
-  const limit = req.query.limit || 5;
-  const projects = await Project.find({ owner: req.user.id })
-    .skip((page - 1) * limit)
-    .limit(limit);
-  res.json(projects);
-});
-
-router.put('/:id', auth, async (req, res) => {
-  const project = await Project.findOneAndUpdate(
-    { _id: req.params.id, owner: req.user.id },
-    req.body,
-    { new: true }
-  );
-  res.json(project);
+  try {
+    const projets = await Projet.find({ owner: req.user.id });
+    res.json(projets);
+  } catch (err) {
+    res.status(500).json({ msg: "Erreur serveur" });
+  }
 });
 
 router.delete('/:id', auth, async (req, res) => {
-  const project = await Project.findOne({ _id: req.params.id, owner: req.user.id });
-  await project.deleteOne();
-  res.json({ message: 'Deleted' });
+  try {
+    const projetId = req.params.id;
+
+    await Task.deleteMany({ project: projetId });
+    const projetDeleted = await Projet.findOneAndDelete({ _id: projetId, owner: req.user.id });
+
+    if (!projetDeleted) {
+      return res.status(404).json({ msg: "Projet non trouvé" });
+    }
+
+    res.json({ msg: "Projet et ses tâches supprimés avec succès !" });
+  } catch (err) {
+    res.status(500).json({ msg: "Erreur serveur", error: err.message });
+  }
 });
 
 module.exports = router;

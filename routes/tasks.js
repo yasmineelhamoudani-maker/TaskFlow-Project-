@@ -1,59 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const Task = require('../models/Task');
+const Projet = require('../models/projet');
+const Task = require('../models/task'); 
 const auth = require('../middleware/auth');
-router.put('/:id/assign', auth, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      { assignedTo: req.body.userId },
-      { new: true }
-    ).populate('assignedTo', 'name email'); // retourne nom + email sans mot de passe
-
-    res.json(task);
-  } catch (err) { res.status(500).json({ msg: 'Erreur serveur' });
+    const { title, description } = req.body;
+    const newProjet = new Projet({ title, description, owner: req.user.id });
+    const savedProjet = await newProjet.save();
+    res.status(201).json(savedProjet);
+  } catch (err) {
+    res.status(500).json({ msg: "Erreur serveur", error: err.message });
   }
 });
+
 router.get('/', auth, async (req, res) => {
   try {
-    const { status, priority, assignedTo, search, page = 1, limit = 5 } = req.query;
+    const projets = await Projet.find({ owner: req.user.id });
+    res.json(projets);
+  } catch (err) {
+    res.status(500).json({ msg: "Erreur serveur" });
+  }
+});
 
-    // Construction du filtre de manière conditionnelle
-    const filter = {};
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const projetId = req.params.id;
 
-    if (status)     filter.status = status;
-    if (priority)   filter.priority = priority;
-    if (assignedTo) filter.assignedTo = assignedTo;// Recherche par mot-clé dans titre ou description ($regex)
-    if (search) {
-      filter.$or = [
-        { title:       { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
+   
+    await Task.deleteMany({ project: projetId });
+    const projetDeleted = await Projet.findOneAndDelete({ _id: projetId, owner: req.user.id });
+
+    if (!projetDeleted) {
+      return res.status(404).json({ msg: "Projet non trouvé" });
     }
 
-    // Pagination
-    const total = await Task.countDocuments(filter);
-    const tasks = await Task.find(filter)
-      .populate('assignedTo', 'name email')
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
- res.json({
-      data:       tasks,
-      total,
-      page:       Number(page),
-      totalPages: Math.ceil(total / limit)
-    });
+    res.json({ msg: "Projet et ses tâches supprimés avec succès !" });
+  } catch (err) {
+    res.status(500).json({ msg: "Erreur serveur", error: err.message });
+  }
+});
 
-  } catch (err) {
-    res.status(500).json({ msg: 'Erreur serveur' });
-  }
-});
-router.get('/my-tasks', auth, async (req, res) => {
-  try {const tasks = await Task.find({ assignedTo: req.user.id })
-      .populate('assignedTo', 'name email');
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ msg: 'Erreur serveur' });
-  }
-});
 module.exports = router;

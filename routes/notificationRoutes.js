@@ -1,31 +1,27 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../Middleware/auth');
 const Notification = require('../models/notification');
-const authMiddleware = require('../Middleware/auth');
 
-// GET toutes les notifications de l'utilisateur connecte
-router.get('/', authMiddleware, async (req, res) => {
-  try {
-    const notifications = await Notification.find({ userId: req.user.id })
-      .sort({ createdAt: -1 });
-    res.json(notifications);
-  } catch (error) {
-    res.status(500).json({ message: "Erreur serveur", error });
-  }
+// Récupérer les notifications de l'utilisateur connecté
+router.get('/', auth, async (req, res) => {
+    try {
+        const notifications = await Notification.find({ user: req.userId })
+            .sort({ date: -1 });
+        res.json(notifications);
+    } catch (err) {
+        res.status(500).json({ msg: 'Erreur serveur' });
+    }
 });
 
-// PATCH marquer une notification comme lue
-router.patch('/:id/read', authMiddleware, async (req, res) => {
-  try {
-    const notification = await Notification.findByIdAndUpdate(
-      req.params.id,
-      { isRead: true },
-      { new: true }
-    );
-    res.json(notification);
-  } catch (error) {
-    res.status(500).json({ message: "Erreur serveur", error });
-  }
+// Marquer comme lu
+router.patch('/:id/read', auth, async (req, res) => {
+    try {
+        await Notification.findByIdAndUpdate(req.params.id, { read: true });
+        res.json({ msg: 'Notification marquée comme lue' });
+    } catch (err) {
+        res.status(500).json({ msg: 'Erreur serveur' });
+    }
 });
 
 module.exports = router;

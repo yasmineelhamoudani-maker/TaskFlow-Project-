@@ -1,27 +1,9 @@
-const mongoose = require('mongoose');
 
-const taskSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true
-  },
-  priority: {
-    type: String,
-    enum: ['basse', 'moyenne', 'haute'],
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['à faire', 'en cours', 'terminé'],
-    default: 'à faire'
-  },
-  project: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Project',
-    required: true
-  },
-  deadline: Date  
-}, { timestamps: true });
-
-module.exports = mongoose.model('Task', taskSchema);
- 
+if (task.assignedTo) {
+    // Logique pour créer une entrée dans le modèle Notification
+    await Notification.create({
+        user: task.assignedTo,
+        message: `Une nouvelle tâche vous a été assignée : ${task.title}`,
+        read: false
+    });
+}
