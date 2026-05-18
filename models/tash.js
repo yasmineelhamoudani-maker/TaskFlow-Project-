@@ -1,14 +1,43 @@
-const mongoose = require('mongoose');
+const express = require("express");
+const router = express.Router();
+const Task = require("../models/tasks");
+const Project = require("../models/project");
+const auth = require("../middleware/auth");
 
-const TaskSchema = new mongoose.Schema({
-  title:       { type: String, required: true },
-  description: { type: String },
-  status:      { type: String, enum: ['todo', 'in-progress', 'done'], default: 'todo' },
-  priority:    { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
-  project:     { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
-
-  // Fonctionnalité 4 : assignation
-  assignedTo:  { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+router.post("/", auth, async (req, res) => {
+  try {
+    const { title, description, status, priority, project, assignedTo } = req.body;
+    const newTask = new Task({ title, description, status, priority, project, assignedTo });
+    await newTask.save();
+    const taskWithUser = await Task.findById(newTask._id)
+      .populate("assignedTo", "name email")
+      .populate("project", "name");
+    res.status(201).json({ message: "Tache creee avec succes", task: taskWithUser });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur creation tache", error: error.message });
+  }
 });
 
-module.exports = mongoose.model('Task', TaskSchema);
+router.get("/", auth, async (req, res) => {
+  try {
+    const tasks = await Task.find()
+      .populate("assignedTo", "name email")
+      .populate("project", "name");
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur recuperation taches", error: error.message });
+  }
+});
+
+router.get("/project/:projectId", auth, async (req, res) => {
+  try {
+    const tasks = await Task.find({ project: req.params.projectId })
+      .populate("assignedTo", "name email")
+      .populate("project", "name");
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur filtrage taches", error: error.message });
+  }
+});
+
+module.exports = router;
