@@ -1,31 +1,56 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/user'); // تأكدي من مسار المجلد models
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
 
-// @route   POST api/auth/register
-// @desc    Enregistrer un nouvel utilisateur
+// 1. Register
 router.post('/register', async (req, res) => {
-    const { nom, email, password } = req.body;
-// Routes
-app.use('/api/auth', require('./routes/auth'));
     try {
-        // Vérifier si l'utilisateur existe déjà
+        const { nom, email, password } = req.body;
+
         let user = await User.findOne({ email });
-        if (user) {
-            return res.status(400).json({ msg: "L'utilisateur existe déjà" });
+        if (user) return res.status(400).json({ msg: 'Utilisateur déjà existant' });
+
+        // تشفير الباسورد هنا (مرة واحدة فقط)
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        user = new User({
+            nom,
+            email,
+            password: hashedPassword
+        });
+
+        await user.save();
+        res.status(201).json({ message: "Utilisateur créé avec succès !" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. Login
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(400).json({ message: "Utilisateur non trouvé !" });
+
+        // مقارنة الباسورد
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Mot de passe incorrect" });
         }
 
-        // Créer une nouvelle instance de l'utilisateur
-        user = new User({ nom, email, password });
+        const payload = { userId: user.id };
+        
+        // التعديل هنا: كنخدموا بالـ JWT_SECRET اللي في الـ .env باش يتطابق مع الـ Middleware
+        const token = jwt.sign(payload, process.env.JWT_SECRET || 'secretKey', { expiresIn: '1h' });
 
-        // Sauvegarder dans la base de données
-        await user.save();
-
-        res.status(201).json({ msg: "Utilisateur créé avec succès !" });
+        res.json({ message: "Connexion réussie !", token });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Erreur du serveur");
+        res.status(500).json({ error: err.message });
     }
 });
 
