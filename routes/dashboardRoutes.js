@@ -28,4 +28,24 @@ router.get('/', async (req, res) => {
     }
 });
 
+const Activity = require('../models/Activity');
+
+
+
+router.get('/activities', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const activities = await mongoose.connection.collection('activities')
+            .find()
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .toArray(); 
+            
+        res.json(activities);
+    } catch (err) {
+        console.error("❌ Erreur Route activities :", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
