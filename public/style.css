@@ -1,4 +1,4 @@
-/* استيراد خط عصري ونقي */
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
 
 * {
@@ -37,7 +37,7 @@ h1 {
     letter-spacing: -0.5px;
 }
 
-/* صندوق إضافة تاشة */
+
 .add-task {
     display: flex;
     gap: 10px;
@@ -84,7 +84,7 @@ h1 {
     transform: translateY(1px);
 }
 
-/* قائمة التاشات */
+
 .list {
     display: flex;
     flex-direction: column;
@@ -94,7 +94,7 @@ h1 {
     padding-right: 5px;
 }
 
-/* ستايل الـ Scrollbar باش يجي رقيق وزوين */
+
 .list::-webkit-scrollbar {
     width: 6px;
 }
@@ -103,7 +103,7 @@ h1 {
     border-radius: 3px;
 }
 
-/* كارت التاشة فردية */
+
 .task-item {
     display: flex;
     justify-content: space-between;
@@ -129,7 +129,7 @@ h1 {
     font-weight: 500;
 }
 
-/* زر الحذف العصري */
+
 .delete-btn {
     background: #fee2e2;
     color: #ef4444;
@@ -148,7 +148,7 @@ h1 {
     transform: scale(1.05);
 }
 
-/* ميساج "لا توجد مهام" */
+
 .no-tasks {
     color: #94a3b8;
     text-align: center;
@@ -160,7 +160,7 @@ h1 {
     border-radius: 12px;
 }
 
-/* أنيميشن خفيفة عند ظهور التاشات */
+
 @keyframes fadeIn {
     from {
         opacity: 0;
