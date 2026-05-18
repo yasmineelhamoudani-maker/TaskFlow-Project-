@@ -1,5 +1,5 @@
 
-// ============ F7 — Brouillons (الـ LocalStorage) ============
+// ============ F7 — Brouillons (LocalStorage) ============
 const PROJECT_ID = "smi_s4_project"; 
 
 function saveDraft(projectId, formData) {
