@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/task'); 
@@ -37,3 +38,14 @@ router.post('/', async (req, res) => {
 });
 
 module.exports = router;
+=======
+
+if (task.assignedTo) {
+    // Logique pour créer une entrée dans le modèle Notification
+    await Notification.create({
+        user: task.assignedTo,
+        message: `Une nouvelle tâche vous a été assignée : ${task.title}`,
+        read: false
+    });
+}
+>>>>>>> origin/develop
