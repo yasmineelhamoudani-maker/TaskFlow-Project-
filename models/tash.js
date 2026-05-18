@@ -39,5 +39,72 @@ router.get("/project/:projectId", auth, async (req, res) => {
     res.status(500).json({ message: "Erreur filtrage taches", error: error.message });
   }
 });
+// 5. Fonctionnalité 6 : filtrage, recherche et pagination
+router.get("/project/:projectId/filter", auth, async (req, res) => {
+  try {
+    const { status, priority, assignedTo, search, page, limit } = req.query;
+
+    const filter = {
+      project: req.params.projectId
+    };
+     
+    if (status) {
+      filter.status = status;
+    }
+
+    
+    if (priority) {
+      filter.priority = priority;
+    }
+
+    
+    if (assignedTo) {
+      filter.assignedTo = assignedTo;
+    }
+
+    if (search) {
+      filter.$or = [
+        {
+          title: {
+            $regex: search,
+            $options: "i"
+          }
+        },
+        {
+          description: {
+            $regex: search,
+            $options: "i"
+          }
+        }
+      ];
+    }
+    const pageNumber = parseInt(page) || 1;
+    const limitNumber = parseInt(limit) || 5;
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const total = await Task.countDocuments(filter);
+
+    const tasks = await Task.find(filter)
+      .populate("project", "name")
+      .populate("assignedTo", "name email")
+      .skip(skip)
+      .limit(limitNumber)
+      .sort({ createdAt: -1 });
+
+    const totalPages = Math.ceil(total / limitNumber);
+
+    res.status(200).json({ data: tasks,
+      total: total,
+      page: pageNumber,
+      totalPages: totalPages
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Erreur lors du filtrage des tâches",
+      error: error.message
+    });
+  }
+});
 
 module.exports = router;
