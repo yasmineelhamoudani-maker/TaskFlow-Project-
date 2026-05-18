@@ -1,51 +1,7 @@
+// 1. Déclarations globales des éléments HTML
 const listElement = document.getElementById('taskList');
 
-async function fetchTasks() {
-    const res = await fetch('/api/tasks');
-    const tasks = await res.json();
-    listElement.innerHTML = tasks.map(t => `
-        <div class="task-item">
-            <span>${t.title}</span>
-        </div>
-    `).join('');
-}
-
-async function addTask() {
-    const title = document.getElementById('taskTitle').value;
-    if (!title) return;
-
-    await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, userId: "663f7f0e8f3a5b0015e12345" }) 
-    });
-    
-    document.getElementById('taskTitle').value = '';
-    fetchTasks();
-}
-
-fetchTasks();
-async function updateDashboard() {
-    try {
-        const res = await fetch('/api/tasks/dashboard');
-        const stats = await res.json();
-        
-        console.log("🟢 Données reçues pour le Dashboard :", stats);
-
-        const elTotal = document.getElementById('statTotal');
-        const elCompleted = document.getElementById('statCompleted');
-        const elPending = document.getElementById('statPending');
-
-        if (elTotal) elTotal.textContent = stats.totalTasks || 0;
-        if (elCompleted) elCompleted.textContent = stats.completedTasks || 0;
-        if (elPending) elPending.textContent = stats.pendingTasks || 0;
-
-    } catch (err) {
-        console.error("Erreur lors de la mise à jour du dashboard:", err);
-    }
-}
-
-
+// 2. Récupérer et afficher les tâches
 async function fetchTasks() {
     try {
         const res = await fetch('/api/tasks');
@@ -59,7 +15,6 @@ async function fetchTasks() {
         }
 
         listElement.innerHTML = tasks.map(t => {
-            
             const textStyle = t.completed ? 'text-decoration: line-through; color: #94a3b8;' : '';
             
             const completeBtn = !t.completed 
@@ -87,30 +42,15 @@ async function fetchTasks() {
     }
 }
 
-
-async function completeTask(id) {
-    try {
-        const res = await fetch(`/api/tasks/${id}/complete`, {
-            method: 'PATCH'
-        });
-
-        if (res.ok) {
-            await fetchTasks();       
-            await fetchActivities(); 
-        }
-    } catch (err) {
-        console.error("Erreur completeTask:", err);
-    }
-}
-
+// 3. Ajouter une tâche
 async function addTask() {
     const titleInput = document.getElementById('taskTitle');
     const descInput = document.getElementById('taskDesc');
     
-    if (!titleInput || !descInput) return;
+    if (!titleInput) return;
 
     const title = titleInput.value.trim();
-    const description = descInput.value.trim();
+    const description = descInput ? descInput.value.trim() : "";
     
     if (!title) return;
 
@@ -126,7 +66,7 @@ async function addTask() {
 
         if (res.ok) {
             titleInput.value = '';
-            descInput.value = '';
+            if (descInput) descInput.value = '';
             await fetchTasks(); 
             await fetchActivities();
         } else {
@@ -137,7 +77,23 @@ async function addTask() {
     }
 }
 
+// 4. Marquer une tâche comme complétée
+async function completeTask(id) {
+    try {
+        const res = await fetch(`/api/tasks/${id}/complete`, {
+            method: 'PATCH'
+        });
 
+        if (res.ok) {
+            await fetchTasks();       
+            await fetchActivities();  
+        }
+    } catch (err) {
+        console.error("Erreur completeTask:", err);
+    }
+}
+
+// 5. Supprimer une tâche
 async function deleteTask(id) {
     if (!confirm("Voulez-vous vraiment supprimer cette tâche ?")) return;
     try {
@@ -153,15 +109,33 @@ async function deleteTask(id) {
     }
 }
 
+// 6. Mettre à jour le Dashboard
+async function updateDashboard() {
+    try {
+        const res = await fetch('/api/tasks/dashboard');
+        const stats = await res.json();
+        
+        console.log("🟢 Données reçues pour le Dashboard :", stats);
 
+        const elTotal = document.getElementById('statTotal');
+        const elCompleted = document.getElementById('statCompleted');
+        const elPending = document.getElementById('statPending');
 
+        if (elTotal) elTotal.textContent = stats.totalTasks || 0;
+        if (elCompleted) elCompleted.textContent = stats.completedTasks || 0;
+        if (elPending) elPending.textContent = stats.pendingTasks || 0;
+
+    } catch (err) {
+        console.error("Erreur lors de la mise à jour du dashboard:", err);
+    }
+}
+
+// 7. Récupérer et afficher l'historique des activités
 async function fetchActivities() {
     try {
-        
         const res = await fetch('/api/dashboard/activities'); 
-        
-
         if (!res.ok) return;
+        
         const activities = await res.json();
         const activityLog = document.getElementById('activityLog');
 
@@ -186,22 +160,6 @@ async function fetchActivities() {
     }
 }
 
-async function completeTask(id) {
-    try {
-        const res = await fetch(`/api/tasks/${id}/complete`, {
-            method: 'PATCH'
-        });
-
-        if (res.ok) {
-            await fetchTasks();       
-            await fetchDashboard();   
-            await fetchActivities();  
-        }
-    } catch (err) {
-        console.error("Erreur completeTask:", err);
-    }
-}
-
+// 8. Chargement initial au démarrage
 fetchTasks();
 fetchActivities();
-

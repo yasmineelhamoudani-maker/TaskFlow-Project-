@@ -1,10 +1,16 @@
-const Activity = require('../models/Activity');
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Projet = require('../models/projet');
 const Task = require('../models/task'); 
 const auth = require('../middleware/auth');
-router.post('/', auth, async (req, res) => {
+
+// ==========================================
+// 1. ROUTES DES PROJETS (AVEC AUTHENTICATION)
+// ==========================================
+
+// Ajouter un projet
+router.post('/projets', auth, async (req, res) => {
   try {
     const { title, description } = req.body;
     const newProjet = new Projet({ title, description, owner: req.user.id });
@@ -15,7 +21,8 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.get('/', auth, async (req, res) => {
+// Récupérer les projets
+router.get('/projets', auth, async (req, res) => {
   try {
     const projets = await Projet.find({ owner: req.user.id });
     res.json(projets);
@@ -24,26 +31,26 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.delete('/:id', auth, async (req, res) => {
+// Supprimer un projet et ses tâches
+router.delete('/projets/:id', auth, async (req, res) => {
   try {
     const projetId = req.params.id;
-
-   
     await Task.deleteMany({ project: projetId });
     const projetDeleted = await Projet.findOneAndDelete({ _id: projetId, owner: req.user.id });
 
     if (!projetDeleted) {
       return res.status(404).json({ msg: "Projet non trouvé" });
     }
-
     res.json({ msg: "Projet et ses tâches supprimés avec succès !" });
   } catch (err) {
     res.status(500).json({ msg: "Erreur serveur", error: err.message });
   }
-const mongoose = require('mongoose');
-const Task = require('../models/task'); 
+});
 
 
+// 2. ROUTES DES TÂCHES & DASHBOARD (DYNAMIQUE)
+
+// Récupérer toutes les tâches (Dashboard / Historique)
 router.get('/', async (req, res) => {
     try {
         const tasks = await Task.find({}).sort({ createdAt: -1 });
@@ -53,7 +60,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-
+// Ajouter une tâche + Historique (Activités)
 router.post('/', async (req, res) => {
     try {
         const { title, description, deadline } = req.body; 
@@ -78,12 +85,11 @@ router.post('/', async (req, res) => {
 
         res.status(201).json({ _id: result.insertedId, ...taskData });
     } catch (err) {
-        console.error("❌ Erreur POST détaillée :", err.message);
         res.status(500).json({ message: "Erreur serveur lors de l'ajout", error: err.message });
     }
 });
 
-
+// Supprimer une tâche + Historique
 router.delete('/:id', async (req, res) => {
     try {
         const taskId = req.params.id;
@@ -102,12 +108,11 @@ router.delete('/:id', async (req, res) => {
 
         res.json({ message: "Tâche supprimée avec succès" });
     } catch (err) {
-        console.error("❌ Erreur DELETE :", err.message);
         res.status(500).json({ message: "Erreur DELETE", error: err.message });
     }
 });
 
-
+// Marquer une tâche comme complétée (Patch)
 router.patch('/:id/complete', async (req, res) => {
     try {
         const taskId = req.params.id;
@@ -116,13 +121,11 @@ router.patch('/:id/complete', async (req, res) => {
         const task = await mongoose.connection.collection('tasks').findOne({ _id: taskObjectId });
         if (!task) return res.status(404).json({ message: "Tâche non trouvée" });
 
-        
         await mongoose.connection.collection('tasks').updateOne(
             { _id: taskObjectId },
             { $set: { completed: true } }
         );
 
-        
         await mongoose.connection.collection('activities').insertOne({
             action: "Mise à jour",
             details: `La tâche "${task.title}" a été marquée comme complétée.`,
@@ -131,12 +134,11 @@ router.patch('/:id/complete', async (req, res) => {
 
         res.json({ message: "Tâche marquée comme complétée" });
     } catch (err) {
-        console.error("❌ Erreur PATCH :", err.message);
         res.status(500).json({ message: "Erreur lors de la mise à jour" });
     }
 });
 
-
+// Statistiques du Dashboard
 router.get('/dashboard', async (req, res) => {
     try {
         const total = await Task.countDocuments();
@@ -156,7 +158,6 @@ router.get('/dashboard', async (req, res) => {
             overdueTasks: overdue 
         });
     } catch (err) {
-        console.error("Erreur Dashboard Backend:", err.message);
         res.status(500).json({ message: "Erreur serveur" });
     }
 });

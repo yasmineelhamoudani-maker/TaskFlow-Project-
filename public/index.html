@@ -2,101 +2,172 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>TaskFlow | Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>📋 TaskFlow Project</h1>
-        <div class="add-task">
-            <input type="text" id="taskTitle" placeholder="Nouvelle tâche...">
-            <button onclick="addTask()">Ajouter</button>
-        </div>
-        <div id="taskList" class="list"></div>
-    </div>
-    <script src="script.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Gestion de Tâches SMI S4</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>TaskFlow | Gestion de Tâches & Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
-        
-        /* Dashboard Stats  */
-        .dashboard-stats { display: flex; gap: 10px; margin-bottom: 25px; text-align: center; }
-        .stat-card { flex: 1; padding: 12px; border-radius: 8px; }
-        .stat-card span { font-size: 12px; font-weight: 500; }
-        .stat-card h2 { margin: 5px 0 0 0; font-size: 24px; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
 
-        /* Formulaire  */
-        .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        input, textarea { padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; font-family: inherit; }
+        
+        .main-wrapper {
+            display: flex;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        
+        .left-panel {
+            flex: 1;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .right-panel {
+            flex: 1;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+
+        .dashboard-stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .stat-card {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .stat-card.total { background-color: #e0f2fe; color: #0369a1; }
+        .stat-card.completed { background-color: #dcfce7; color: #15803d; }
+        .stat-card.pending { background-color: #fef9c3; color: #a16207; }
+
+        .stat-card span { font-size: 13px; display: block; margin-bottom: 5px; }
+        .stat-card h2 { margin: 0; font-size: 28px; color: inherit; }
+
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, textarea {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
         textarea { resize: vertical; min-height: 80px; }
+
+        button.btn-block {
+            width: 100%;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button.btn-block:hover { background-color: #059669; }
+
         
-        /* Buttons */
-        button { padding: 12px; background-color: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; }
-        button:hover { background-color: #059669; }
-        .delete-btn { background: #ef4444; padding: 8px 12px; font-size: 12px; border-radius: 4px; color: white; cursor: pointer; border: none; }
-        .delete-btn:hover { background: #dc2626; }
+        .task-list {
+            margin-top: 20px;
+        }
 
-        /* Task List */
-        .task-list { margin-top: 30px; }
-        .task-item { background: #fff; border-left: 5px solid #10b981; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .task-info h3 { margin: 0; font-size: 18px; color: #2c3e50; }
-        .task-info p { margin: 5px 0 0; color: #666; font-size: 14px; }
-
-        /* Badge Notifications */
-        #notification-badge { background: #ef4444; color: white; padding: 2px 6px; border-radius: 50%; font-size: 11px; margin-left: 5px; }
+        
+        .historical-section {
+            margin-top: 30px;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 20px;
+        }
+        .historical-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>TaskFlow Project 📝 <span id="notification-badge" style="display: none;"></span></h1>
+    <div class="main-wrapper">
         
-        <div class="dashboard-stats">
-            <div class="stat-card" style="background: #e0f2fe;">
-                <span style="color: #0369a1;">Total</span>
-                <h2 id="statTotal" style="color: #0284c7;">0</h2>
-            </div>
-            <div class="stat-card" style="background: #dcfce7;">
-                <span style="color: #15803d;">Complétées</span>
-                <h2 id="statCompleted" style="color: #16a34a;">0</h2>
-            </div>
-            <div class="stat-card" style="background: #fef3c7;">
-                <span style="color: #b45309;">En cours</span>
-                <h2 id="statPending" style="color: #d97706;">0</h2>
-            </div>
-        </div>
-
-        <div class="form-group" id="task-form">
-            <input type="text" id="taskTitle" placeholder="Titre de la tâche (ex: Révision JS)">
-            <textarea id="taskDesc" placeholder="Description de la tâche..."></textarea>
+        <div class="left-panel">
+            <h1>📋 TaskFlow Project</h1>
             
-            <input type="hidden" id="task-priority" value="moyenne"> 
+            <div class="form-group">
+                <input type="text" id="taskTitle" placeholder="Nouvelle tâche...">
+                <textarea id="taskDesc" placeholder="Description de la tâche..."></textarea>
+                <button onclick="addTask()" class="btn-block">Ajouter la Tâche</button>
+            </div>
+
+            <div id="taskList" class="task-list">
+                <div style="color: #888; text-align: center;">Chargement des tâches...</div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <h2>📊 Tableau de Bord</h2>
             
-            <button onclick="addTask()">Ajouter la Tâche</button>
-        </div>
+            <div class="dashboard-stats">
+                <div class="stat-card total">
+                    <span>Total</span>
+                    <h2 id="statTotal">0</h2>
+                </div>
+                <div class="stat-card completed">
+                    <span>Complétées</span>
+                    <h2 id="statCompleted">0</h2>
+                </div>
+                <div class="stat-card pending">
+                    <span>En cours</span>
+                    <h2 id="statPending">0</h2>
+                </div>
+            </div>
 
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-        <div id="taskList" class="task-list">
-            <p style="text-align:center; color: #888;">Chargement des tâches...</p>
-        </div>
-
-        <div class="history-container" style="margin-top: 30px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1;">
-            <h3 style="font-size: 14px; color: #475569; margin: 0 0 10px 0; font-weight: 600;">📜 Historique des activités</h3>
-            <div id="activityLog" style="display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto; font-size: 13px; color: #64748b;">
-                <div style="font-style: italic; color: #94a3b8;">Aucune activité enregistrée.</div>
+            <div class="historical-section">
+                <h3>📜 Historique des activités</h3>
+                <div id="activityLog" class="historical-list">
+                    <div style="font-style: italic; color: #94a3b8;">Aucune activité enregistrée.</div>
+                </div>
             </div>
         </div>
 
     </div>
 
-    <script src="script.js?v=final" defer></script>
-    
-    <script src="features.js?v=final" defer></script>
-
+    <script src="script.js"></script>
 </body>
 </html>
