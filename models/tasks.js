@@ -1,27 +1,39 @@
-const mongoose = require('mongoose');
+const express = require('express');
+const router = express.Router();
+const Task = require('../models/task'); 
 
-const taskSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true
-  },
-  priority: {
-    type: String,
-    enum: ['basse', 'moyenne', 'haute'],
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['à faire', 'en cours', 'terminé'],
-    default: 'à faire'
-  },
-  project: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Project',
-    required: true
-  },
-  deadline: Date  
-}, { timestamps: true });
 
-module.exports = mongoose.model('Task', taskSchema);
- 
+router.get('/', async (req, res) => {
+    try {
+        const tasks = await Task.find({});
+        res.json(tasks);
+    } catch (err) {
+        res.status(500).json({ message: "Erreur serveur lors du GET" });
+    }
+});
+
+
+router.post('/', async (req, res) => {
+    try {
+        
+        const titleValue = req.body && (req.body.title || req.body.name || req.body.text) 
+                           ? (req.body.title || req.body.name || req.body.text) 
+                           : "Nouvelle tâche";
+
+        const newTask = new Task({
+            title: titleValue,
+            name: titleValue,
+            description: req.body && req.body.description ? req.body.description : "Pas de description",
+            userId: "65f1a2b3c4d5e6f7a8b9c0d1", 
+            user: "65f1a2b3c4d5e6f7a8b9c0d1"
+        });
+
+        const savedTask = await newTask.save();
+        res.status(201).json(savedTask);
+    } catch (err) {
+        console.error("❌ Erreur POST detaillee :", err.message);
+        res.status(500).json({ message: "Erreur lors de l'ajout", error: err.message });
+    }
+});
+
+module.exports = router;

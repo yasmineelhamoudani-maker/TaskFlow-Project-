@@ -1,59 +1,125 @@
+const Activity = require('../models/Activity');
 const express = require('express');
 const router = express.Router();
-const Task = require('../models/Task');
-const auth = require('../middleware/auth');
-router.put('/:id/assign', auth, async (req, res) => {
-  try {
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      { assignedTo: req.body.userId },
-      { new: true }
-    ).populate('assignedTo', 'name email'); // retourne nom + email sans mot de passe
+const mongoose = require('mongoose');
+const Task = require('../models/task'); 
 
-    res.json(task);
-  } catch (err) { res.status(500).json({ msg: 'Erreur serveur' });
-  }
-});
-router.get('/', auth, async (req, res) => {
-  try {
-    const { status, priority, assignedTo, search, page = 1, limit = 5 } = req.query;
 
-    // Construction du filtre de manière conditionnelle
-    const filter = {};
-
-    if (status)     filter.status = status;
-    if (priority)   filter.priority = priority;
-    if (assignedTo) filter.assignedTo = assignedTo;// Recherche par mot-clé dans titre ou description ($regex)
-    if (search) {
-      filter.$or = [
-        { title:       { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
+router.get('/', async (req, res) => {
+    try {
+        const tasks = await Task.find({}).sort({ createdAt: -1 });
+        res.json(tasks);
+    } catch (err) {
+        res.status(500).json({ message: "Erreur GET" });
     }
-
-    // Pagination
-    const total = await Task.countDocuments(filter);
-    const tasks = await Task.find(filter)
-      .populate('assignedTo', 'name email')
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
- res.json({
-      data:       tasks,
-      total,
-      page:       Number(page),
-      totalPages: Math.ceil(total / limit)
-    });
-
-  } catch (err) {
-    res.status(500).json({ msg: 'Erreur serveur' });
-  }
 });
-router.get('/my-tasks', auth, async (req, res) => {
-  try {const tasks = await Task.find({ assignedTo: req.user.id })
-      .populate('assignedTo', 'name email');
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ msg: 'Erreur serveur' });
-  }
+
+
+router.post('/', async (req, res) => {
+    try {
+        const { title, description, deadline } = req.body; 
+        if (!title) return res.status(400).json({ message: "Titre requis" });
+
+        const taskData = {
+            title: title,
+            description: description || "Pas de description", 
+            completed: false,
+            deadline: deadline ? new Date(deadline) : null, 
+            userId: new mongoose.Types.ObjectId(), 
+            user: new mongoose.Types.ObjectId()
+        };
+
+        const result = await mongoose.connection.collection('tasks').insertOne(taskData);
+        
+        await mongoose.connection.collection('activities').insertOne({
+            action: "Création",
+            details: `La tâche "${title}" a été ajoutée.`,
+            createdAt: new Date()
+        });
+
+        res.status(201).json({ _id: result.insertedId, ...taskData });
+    } catch (err) {
+        console.error("❌ Erreur POST détaillée :", err.message);
+        res.status(500).json({ message: "Erreur serveur lors de l'ajout", error: err.message });
+    }
 });
+
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const taskId = req.params.id;
+        const taskObjectId = new mongoose.Types.ObjectId(taskId);
+
+        const task = await mongoose.connection.collection('tasks').findOne({ _id: taskObjectId });
+        const taskTitle = task ? task.title : "sans titre";
+
+        await mongoose.connection.collection('tasks').deleteOne({ _id: taskObjectId });
+
+        await mongoose.connection.collection('activities').insertOne({
+            action: "Suppression",
+            details: `La tâche "${taskTitle}" a été supprimée.`,
+            createdAt: new Date()
+        });
+
+        res.json({ message: "Tâche supprimée avec succès" });
+    } catch (err) {
+        console.error("❌ Erreur DELETE :", err.message);
+        res.status(500).json({ message: "Erreur DELETE", error: err.message });
+    }
+});
+
+
+router.patch('/:id/complete', async (req, res) => {
+    try {
+        const taskId = req.params.id;
+        const taskObjectId = new mongoose.Types.ObjectId(taskId);
+
+        const task = await mongoose.connection.collection('tasks').findOne({ _id: taskObjectId });
+        if (!task) return res.status(404).json({ message: "Tâche non trouvée" });
+
+        
+        await mongoose.connection.collection('tasks').updateOne(
+            { _id: taskObjectId },
+            { $set: { completed: true } }
+        );
+
+        
+        await mongoose.connection.collection('activities').insertOne({
+            action: "Mise à jour",
+            details: `La tâche "${task.title}" a été marquée comme complétée.`,
+            createdAt: new Date()
+        });
+
+        res.json({ message: "Tâche marquée comme complétée" });
+    } catch (err) {
+        console.error("❌ Erreur PATCH :", err.message);
+        res.status(500).json({ message: "Erreur lors de la mise à jour" });
+    }
+});
+
+
+router.get('/dashboard', async (req, res) => {
+    try {
+        const total = await Task.countDocuments();
+        const completed = await Task.countDocuments({ completed: true });
+        const pending = total - completed;
+        
+        const now = new Date();
+        const overdue = await Task.countDocuments({
+            completed: false,
+            deadline: { $lt: now, $ne: null }
+        });
+
+        res.json({
+            totalTasks: total,
+            completedTasks: completed,
+            pendingTasks: pending,
+            overdueTasks: overdue 
+        });
+    } catch (err) {
+        console.error("Erreur Dashboard Backend:", err.message);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+});
+
 module.exports = router;
